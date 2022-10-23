@@ -1,56 +1,55 @@
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
 use serde::Deserialize;
 
-
-#[allow(non_snake_case)]
+#[serde(rename_all = "PascalCase")]
 #[derive(Deserialize, Debug)]
 struct LennyDish {
-    MealPeriods: Vec<MealPeriod>,
+    meal_periods: Vec<MealPeriod>,
 }
 
 
-#[allow(non_snake_case)]
+#[serde(rename_all = "PascalCase")]
 #[derive(Deserialize, Debug)]
 struct MealPeriod {
-    MealPeriod: String,
-    Stations: Vec<Station>,
+    meal_period: String,
+    stations: Vec<Station>,
 }
 
-#[allow(non_snake_case)]
+#[serde(rename_all = "PascalCase")]
 #[derive(Deserialize, Debug)]
 struct Station {
-    Id: String,
-    Name: String,
-    Sort: u32,
-    SubCategories: Vec<SubCategory>,
+    id: String,
+    name: String,
+    sort: u32,
+    sub_categories: Vec<SubCategory>,
 }
 
-#[allow(non_snake_case)]
+#[serde(rename_all = "PascalCase")]
 #[derive(Deserialize, Debug)]
 struct SubCategory {
-    Name: String,
-    Sort: u32,
-    Items: Vec<Item>,
+    name: String,
+    sort: u32,
+    items: Vec<Item>,
 }
 
-#[allow(non_snake_case)]
+#[serde(rename_all = "PascalCase")]
 #[derive(Deserialize, Debug)]
 struct Item {
-    ProductName: String,
-    Serving: String,
-    Calories: String,
-    CaloriesFromFat: String,
-    TotalFat: String,
-    SaturatedFat: String,
-    TransFat: String,
-    Cholesterol: String,
-    Sodium: String,
-    TotalCarbohydrates: String,
-    DietaryFiber: String,
-    Sugars: String,
-    Protein: String,
-    IsVegetarian: bool,
-    Allergens: String,
+    product_name: String,
+    serving: String,
+    calories: String,
+    calories_from_fat: String,
+    total_fat: String,
+    saturated_fat: String,
+    trans_fat: String,
+    cholesterol: String,
+    sodium: String,
+    total_carbohydrates: String,
+    dietary_fiber: String,
+    sugars: String,
+    protein: String,
+    is_vegetarian: bool,
+    allergens: String,
 }
 
 
