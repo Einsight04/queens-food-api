@@ -1,4 +1,5 @@
 mod food_api;
+mod database;
 
 extern crate redis;
 
@@ -7,6 +8,7 @@ use redis::Commands;
 use serde::Deserialize;
 use food_api::LennyDish;
 use tokio::time::{sleep, Duration};
+use database::CLIENT;
 
 
 #[tokio::main]
@@ -33,7 +35,6 @@ async fn echo(req_body: String) -> impl Responder {
     HttpResponse::Ok().body(req_body)
 }
 
-
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     // print out hello world every 5 seconds
@@ -44,13 +45,11 @@ async fn main() -> std::io::Result<()> {
     //     }
     // });
 
-    // setup redis connection to redis-15387.c14.us-east-1-2.ec2.cloud.redislabs.com:15387
-    // username: default
-    // password: 6tY4kfWONMp92txOmFNFp9ek3wNTAQdI
-    let client = redis::Client::open("redis://default:6tY4kfWONMp92txOmFNFp9ek3wNTAQdI@redis-15387.c14.us-east-1-2.ec2.cloud.redislabs.com:15387")
-        .expect("Failed to connect to redis");
+    // redis://default:6tY4kfWONMp92txOmFNFp9ek3wNTAQdI@redis-13163.c83.us-east-1-2.ec2.cloud.redislabs.com:13163
+    // let client = redis::Client::open("redis://127.0.0.1:6379")
+    //     .expect("Failed to connect to redis");
 
-    let mut con = client.get_connection()
+    let mut con = CLIENT.get_connection()
         .expect("Failed to get connection");
 
     let _: () = con.set("my_key", "Hello Redis!")
