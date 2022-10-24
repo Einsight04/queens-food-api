@@ -1,60 +1,16 @@
+mod food_api;
+
+extern crate redis;
+
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+use redis::Commands;
 use serde::Deserialize;
-
-#[serde(rename_all = "PascalCase")]
-#[derive(Deserialize, Debug)]
-struct LennyDish {
-    meal_periods: Vec<MealPeriod>,
-}
-
-
-#[serde(rename_all = "PascalCase")]
-#[derive(Deserialize, Debug)]
-struct MealPeriod {
-    meal_period: String,
-    stations: Vec<Station>,
-}
-
-#[serde(rename_all = "PascalCase")]
-#[derive(Deserialize, Debug)]
-struct Station {
-    id: String,
-    name: String,
-    sort: u32,
-    sub_categories: Vec<SubCategory>,
-}
-
-#[serde(rename_all = "PascalCase")]
-#[derive(Deserialize, Debug)]
-struct SubCategory {
-    name: String,
-    sort: u32,
-    items: Vec<Item>,
-}
-
-#[serde(rename_all = "PascalCase")]
-#[derive(Deserialize, Debug)]
-struct Item {
-    product_name: String,
-    serving: String,
-    calories: String,
-    calories_from_fat: String,
-    total_fat: String,
-    saturated_fat: String,
-    trans_fat: String,
-    cholesterol: String,
-    sodium: String,
-    total_carbohydrates: String,
-    dietary_fiber: String,
-    sugars: String,
-    protein: String,
-    is_vegetarian: bool,
-    allergens: String,
-}
+use food_api::LennyDish;
+use tokio::time::{sleep, Duration};
 
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn request() -> Result<(), Box<dyn std::error::Error>> {
     let resp = reqwest::get(
         "https://studentweb.housing.queensu.ca/public/campusDishAPI/campusDishAPI.php?locationId=14627&mealPeriod=Lunch&selDate=10-22-2022")
         .await?
@@ -67,25 +23,50 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-// #[get("/")]
-// async fn hello() -> impl Responder {
-//     HttpResponse::Ok().body("Hello world!")
-// }
-//
-// #[post("/echo")]
-// async fn echo(req_body: String) -> impl Responder {
-//     HttpResponse::Ok().body(req_body)
-// }
-//
-//
-// #[actix_web::main]
-// async fn main() -> std::io::Result<()> {
-//     HttpServer::new(|| {
-//         App::new()
-//             .service(hello)
-//             .service(echo)
-//     })
-//         .bind(("127.0.0.1", 3000))?
-//         .run()
-//         .await
-// }
+#[get("/")]
+async fn hello() -> impl Responder {
+    HttpResponse::Ok().body("Hello world!")
+}
+
+#[post("/echo")]
+async fn echo(req_body: String) -> impl Responder {
+    HttpResponse::Ok().body(req_body)
+}
+
+
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    // print out hello world every 5 seconds
+    // tokio::spawn(async move {
+    //     loop {
+    //         println!("Hello world!");
+    //         sleep(Duration::from_secs(1 * 60)).await;
+    //     }
+    // });
+
+    // setup redis connection to redis-15387.c14.us-east-1-2.ec2.cloud.redislabs.com:15387
+    // username: default
+    // password: 6tY4kfWONMp92txOmFNFp9ek3wNTAQdI
+    let client = redis::Client::open("redis://default:6tY4kfWONMp92txOmFNFp9ek3wNTAQdI@redis-15387.c14.us-east-1-2.ec2.cloud.redislabs.com:15387")
+        .expect("Failed to connect to redis");
+
+    let mut con = client.get_connection()
+        .expect("Failed to get connection");
+
+    let _: () = con.set("my_key", "Hello Redis!")
+        .expect("Failed to set key");
+
+    let value: String = con.get("my_key")
+        .expect("Failed to get key");
+
+    println!("Got value: {}", value);
+
+    HttpServer::new(|| {
+        App::new()
+            .service(hello)
+            .service(echo)
+    })
+        .bind(("127.0.0.1", 3000))?
+        .run()
+        .await
+}
