@@ -56,12 +56,14 @@ async fn main() -> std::io::Result<()> {
     //setup env logger
     env_logger::init_from_env(Env::default().default_filter_or("info"));
 
-    food_info_setup::handler().await;
+    food_info_setup::handler()
+        .await;
     scheduler_setup::setup_scheduler();
 
     // setup redis client
     let client = redis::Client::open("redis://127.0.0.1:6379")
         .expect("Failed to connect to redis");
+
 
     // create r2d2 pool
     let pool = r2d2::Pool::builder()
