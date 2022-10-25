@@ -1,7 +1,6 @@
 mod schemas;
-mod models;
-mod controllers;
 mod scheduler;
+mod api;
 
 extern crate redis;
 
@@ -21,7 +20,7 @@ use std::thread;
 use std::time::Duration;
 use actix_web::cookie::time::ext::NumericalDuration;
 use schemas::food_api::LennyDish;
-use scheduler::scheduler_setup;
+use scheduler::{scheduler_setup, tasks::food_info_setup};
 
 
 #[tokio::main]
@@ -46,22 +45,6 @@ async fn hello() -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    // print hello world at 11:10 every day
-    // let mut scheduler = Scheduler::new();
-    // // every 5 seconds
-    // scheduler.every(TimeUnits::seconds(3)).run(|| {
-    //     println!("Hello world!");
-    // });
-    //
-    // thread::spawn(move || {
-    //     loop {
-    //         scheduler.run_pending();
-    //         let _ = sleep(Duration::from_millis(100));
-    //     }
-    // });
-
-    scheduler_setup::setup_scheduler();
-
     //load env vars
     dotenv().expect("dotenv load fail");
     let (user, pass, address) = (
@@ -72,6 +55,9 @@ async fn main() -> std::io::Result<()> {
 
     //setup env logger
     env_logger::init_from_env(Env::default().default_filter_or("info"));
+
+    food_info_setup::handler().await;
+    scheduler_setup::setup_scheduler();
 
     // setup redis client
     let client = redis::Client::open("redis://127.0.0.1:6379")

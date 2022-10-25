@@ -1282,6 +1282,7 @@ dependencies = [
  "actix-cors",
  "actix-governor",
  "actix-web",
+ "chrono",
  "clokwerk",
  "dotenv",
  "env_logger",
