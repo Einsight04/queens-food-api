@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+
 #[serde(rename_all = "PascalCase")]
 #[derive(Deserialize, Debug)]
 pub struct LennyDish {

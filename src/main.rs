@@ -1,4 +1,7 @@
-mod food_api;
+mod schemas;
+mod models;
+mod controllers;
+mod scheduler;
 
 extern crate redis;
 
@@ -7,12 +10,12 @@ use std::sync::Arc;
 use actix_cors::Cors;
 use actix_governor::{Governor, GovernorConfigBuilder};
 use actix_web::{middleware::Logger, get, post, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
-use dotenv::dotenv;
-use env_logger::Env;
 use redis::Commands;
+use dotenv::dotenv;
 use serde::Deserialize;
-use food_api::LennyDish;
 use tokio::time::{sleep, Duration};
+use env_logger::Env;
+use schemas::food_api::LennyDish;
 
 
 #[tokio::main]
