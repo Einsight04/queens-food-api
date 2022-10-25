@@ -1,14 +1,18 @@
 mod food_api;
-mod database;
 
 extern crate redis;
 
-use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+use std::env::var;
+use std::sync::Arc;
+use actix_cors::Cors;
+use actix_governor::{Governor, GovernorConfigBuilder};
+use actix_web::{middleware::Logger, get, post, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
+use dotenv::dotenv;
+use env_logger::Env;
 use redis::Commands;
 use serde::Deserialize;
 use food_api::LennyDish;
 use tokio::time::{sleep, Duration};
-use database::CLIENT;
 
 
 #[tokio::main]
@@ -30,10 +34,6 @@ async fn hello() -> impl Responder {
     HttpResponse::Ok().body("Hello world!")
 }
 
-#[post("/echo")]
-async fn echo(req_body: String) -> impl Responder {
-    HttpResponse::Ok().body(req_body)
-}
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -45,27 +45,51 @@ async fn main() -> std::io::Result<()> {
     //     }
     // });
 
-    // redis://default:6tY4kfWONMp92txOmFNFp9ek3wNTAQdI@redis-13163.c83.us-east-1-2.ec2.cloud.redislabs.com:13163
-    // let client = redis::Client::open("redis://127.0.0.1:6379")
-    //     .expect("Failed to connect to redis");
+    //load env vars
+    dotenv().expect("dotenv load fail");
+    let (user, pass, address) = (
+        var("REDIS_USER").expect("failed to load redis user"),
+        var("REDIS_PASS").expect("failed to load redis pass"),
+        var("REDIS_ADDRESS").expect("failed to load redis address"),
+    );
 
-    let mut con = CLIENT.get_connection()
-        .expect("Failed to get connection");
+    //setup env logger
+    env_logger::init_from_env(Env::default().default_filter_or("info"));
 
-    let _: () = con.set("my_key", "Hello Redis!")
-        .expect("Failed to set key");
+    // setup redis client
+    let client = redis::Client::open("redis://127.0.0.1:6379")
+        .expect("Failed to connect to redis");
 
-    let value: String = con.get("my_key")
-        .expect("Failed to get key");
+    // create r2d2 pool
+    let pool = r2d2::Pool::builder()
+        .build(client)
+        .expect("failed to create pool");
 
-    println!("Got value: {}", value);
+    // create shared pool state
+    let wrapped = Arc::new(pool);
 
-    HttpServer::new(|| {
+    // rate limiter, 3 requests per second
+    let governor_conf = GovernorConfigBuilder::default()
+        .per_second(1)
+        .burst_size(5)
+        .finish()
+        .unwrap();
+
+    HttpServer::new(move || {
+        let cors = Cors::default()
+            .allow_any_origin()
+            .allowed_methods(vec!["GET", "POST", "OPTIONS"])
+            .allow_any_header()
+            .max_age(3600);
+
         App::new()
+            .app_data(web::Data::from(wrapped.clone()))
+            .wrap(Governor::new(&governor_conf))
+            .wrap(Logger::default())
+            .wrap(cors)
             .service(hello)
-            .service(echo)
     })
-        .bind(("127.0.0.1", 3000))?
+        .bind("127.0.0.1:3000")?
         .run()
         .await
 }
