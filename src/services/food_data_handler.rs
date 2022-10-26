@@ -1,15 +1,10 @@
-use chrono::{Utc};
+use crate::schemas::food_data_apis::{CleanedFoodApi, UncleanedFoodApi};
+use chrono::Utc;
 use redis::Commands;
 use serde::{Deserialize, Serialize};
-use crate::schemas::food_data::{CleanedFoodApi, UncleanedFoodApi};
-
 
 pub async fn updater(con: &mut r2d2::PooledConnection<redis::Client>) {
-    let location_ids = vec![
-        ("lenny", 14627),
-        ("ban_righ", 14628),
-        ("jean_royce", 14629),
-    ];
+    let location_ids = vec![("lenny", 14627), ("ban_righ", 14628), ("jean_royce", 14629)];
 
     // get current date
     let current_date = Utc::now();
@@ -19,7 +14,6 @@ pub async fn updater(con: &mut r2d2::PooledConnection<redis::Client>) {
     for (location_name, location_id) in location_ids {
         // loop through meal periods
         for meal_period in vec!["Breakfast", "Lunch", "Dinner"] {
-
             // get food info
             let resp = reqwest::get(&format!(
                 "https://studentweb.housing.queensu.ca/public/campusDishAPI/campusDishAPI.php?locationId={}&mealPeriod={}&selDate={}",
@@ -44,7 +38,6 @@ pub async fn updater(con: &mut r2d2::PooledConnection<redis::Client>) {
         }
     }
 }
-
 
 fn cleanup(data: &UncleanedFoodApi) -> Vec<CleanedFoodApi> {
     // make vector of food data
@@ -74,7 +67,8 @@ fn cleanup(data: &UncleanedFoodApi) -> Vec<CleanedFoodApi> {
                 protein: item.protein.clone(),
                 is_vegetarian: item.is_vegetarian,
                 allergens: item.allergens.clone(),
-            }));
+            }),
+    );
 
     food_data
 }

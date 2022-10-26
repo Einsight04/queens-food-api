@@ -4,7 +4,7 @@ mod services;
 
 extern crate redis;
 
-use crate::services::food_data;
+use crate::services::food_data_handler;
 use actix_cors::Cors;
 use actix_governor::{Governor, GovernorConfigBuilder};
 use actix_web::{
@@ -12,7 +12,7 @@ use actix_web::{
 };
 use dotenv::dotenv;
 use env_logger::Env;
-use schemas::food_data::UncleanedFoodApi;
+use schemas::food_data_apis::UncleanedFoodApi;
 use std::env::var;
 use std::sync::{Arc};
 use std::time::Duration;
@@ -72,11 +72,11 @@ async fn main() -> std::io::Result<()> {
     let mut con: r2d2::PooledConnection<redis::Client> = wrapped.get().unwrap();
 
     actix_web::rt::spawn(async move {
-        food_data::updater(&mut con).await;
+        food_data_handler::updater(&mut con).await;
 
         actix_web::rt::spawn(async move {
             loop {
-                food_data::updater(&mut con).await;
+                food_data_handler::updater(&mut con).await;
                 sleep(Duration::from_secs(60)).await;
             }
         });
