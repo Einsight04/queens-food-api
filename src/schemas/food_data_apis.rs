@@ -37,7 +37,7 @@ pub struct MealPeriod {
 #[serde(rename_all = "PascalCase")]
 pub struct Station {
     id: String,
-    name: String,
+    pub(crate) name: String,
     sort: u32,
     pub(crate) sub_categories: Vec<SubCategory>,
 }
