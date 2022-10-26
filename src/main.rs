@@ -17,7 +17,7 @@ use clokwerk::{Scheduler, TimeUnits};
 use dotenv::dotenv;
 use env_logger::Env;
 use redis::Commands;
-use scheduler::{scheduler_handler, tasks::food_info_setup};
+use scheduler::{scheduler_handler, tasks::food_info};
 use schemas::food_api::LennyDish;
 use serde::Deserialize;
 use std::env::var;
@@ -72,8 +72,8 @@ async fn main() -> std::io::Result<()> {
     let mut one_con: r2d2::PooledConnection<redis::Client> = wrapped.get().unwrap();
 
     actix_web::rt::spawn(async move {
-        food_info_setup::handler(&mut one_con).await;
-        scheduler_handler::handler(&mut one_con);
+        food_info::updater(&mut one_con).await;
+        scheduler_handler::start(&mut one_con);
     });
 
     // rate limiter, 3 requests per second

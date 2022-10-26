@@ -1,19 +1,19 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "PascalCase")]
 pub struct LennyDish {
     meal_periods: Vec<MealPeriod>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "PascalCase")]
 struct MealPeriod {
     meal_period: String,
     stations: Vec<Station>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "PascalCase")]
 struct Station {
     id: String,
@@ -22,7 +22,7 @@ struct Station {
     sub_categories: Vec<SubCategory>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "PascalCase")]
 struct SubCategory {
     name: String,
@@ -30,7 +30,7 @@ struct SubCategory {
     items: Vec<Item>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "PascalCase")]
 struct Item {
     product_name: String,
