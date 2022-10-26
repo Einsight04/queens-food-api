@@ -2,43 +2,43 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "PascalCase")]
-pub struct LennyDish {
-    meal_periods: Vec<MealPeriod>,
+pub struct UncleanedFoodApi {
+    pub(crate) meal_periods: Vec<MealPeriod>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "PascalCase")]
-struct MealPeriod {
+pub struct MealPeriod {
     meal_period: String,
-    stations: Vec<Station>,
+    pub(crate) stations: Vec<Station>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "PascalCase")]
-struct Station {
+pub struct Station {
     id: String,
     name: String,
     sort: u32,
-    sub_categories: Vec<SubCategory>,
+    pub(crate) sub_categories: Vec<SubCategory>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "PascalCase")]
-struct SubCategory {
+pub struct SubCategory {
     name: String,
     sort: u32,
-    items: Vec<Item>,
+    pub(crate) items: Vec<Item>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "PascalCase")]
-struct Item {
-    product_name: String,
-    serving: String,
-    calories: String,
-    calories_from_fat: String,
-    total_fat: String,
-    saturated_fat: String,
+pub struct Item {
+    pub(crate) product_name: String,
+    pub(crate) serving: String,
+    pub(crate) calories: String,
+    pub(crate) calories_from_fat: String,
+    pub(crate) total_fat: String,
+    pub(crate) saturated_fat: String,
     trans_fat: String,
     cholesterol: String,
     sodium: String,
@@ -47,5 +47,5 @@ struct Item {
     sugars: String,
     protein: String,
     is_vegetarian: bool,
-    allergens: String,
+    pub(crate) allergens: String,
 }

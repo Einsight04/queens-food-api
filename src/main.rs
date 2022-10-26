@@ -1,29 +1,22 @@
 mod api;
-mod scheduler;
 mod schemas;
 mod services;
 
 extern crate redis;
 
+use crate::services::food_data;
 use actix_cors::Cors;
 use actix_governor::{Governor, GovernorConfigBuilder};
-use actix_web::cookie::time::ext::NumericalDuration;
-use actix_web::rt::time;
 use actix_web::{
-    get, middleware::Logger, post, web, App, HttpRequest, HttpResponse, HttpServer, Responder,
+    get, middleware::Logger, web, App, HttpResponse, HttpServer, Responder, HttpRequest
 };
-use clokwerk::Interval::*;
-use clokwerk::{Scheduler, TimeUnits};
 use dotenv::dotenv;
 use env_logger::Env;
-use redis::Commands;
-use scheduler::{scheduler_handler, tasks::food_info};
-use schemas::food_api::LennyDish;
-use serde::Deserialize;
+use schemas::uncleaned_food_api::UncleanedFoodApi;
 use std::env::var;
-use std::sync::{Arc, RwLock};
-use std::thread;
+use std::sync::{Arc};
 use std::time::Duration;
+use redis::Commands;
 use tokio::time::sleep;
 
 #[tokio::main]
@@ -31,7 +24,7 @@ async fn request() -> Result<(), Box<dyn std::error::Error>> {
     let resp = reqwest::get(
         "https://studentweb.housing.queensu.ca/public/campusDishAPI/campusDishAPI.php?locationId=14627&mealPeriod=Lunch&selDate=10-22-2022")
         .await?
-        .json::<LennyDish>()
+        .json::<UncleanedFoodApi>()
         .await?;
 
     // print serialized json
@@ -40,9 +33,15 @@ async fn request() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-#[get("/")]
-async fn hello() -> impl Responder {
-    HttpResponse::Ok().body("Hello world!")
+async fn hello(pool: web::Data<r2d2::Pool<redis::Client>>) -> impl Responder {
+    // get connectoin from r2d2 pool
+    let mut con = pool.get().unwrap();
+
+    // get key lenny, value Breakfast
+    let breakfast: String = con.hget("lenny", "Breakfast").unwrap();
+
+    // return as stringified json
+    HttpResponse::Ok().body(breakfast)
 }
 
 #[actix_web::main]
@@ -55,7 +54,7 @@ async fn main() -> std::io::Result<()> {
         var("REDIS_ADDRESS").expect("failed to load redis address"),
     );
 
-    //setup env logger
+    // setup env logger
     env_logger::init_from_env(Env::default().default_filter_or("info"));
 
     // setup redis client
@@ -69,11 +68,18 @@ async fn main() -> std::io::Result<()> {
     // create shared pool state
     let wrapped = Arc::new(pool);
 
-    let mut one_con: r2d2::PooledConnection<redis::Client> = wrapped.get().unwrap();
+    // get connection from pool
+    let mut con: r2d2::PooledConnection<redis::Client> = wrapped.get().unwrap();
 
     actix_web::rt::spawn(async move {
-        food_info::updater(&mut one_con).await;
-        scheduler_handler::start(&mut one_con);
+        food_data::updater(&mut con).await;
+
+        actix_web::rt::spawn(async move {
+            loop {
+                food_data::updater(&mut con).await;
+                sleep(Duration::from_secs(60)).await;
+            }
+        });
     });
 
     // rate limiter, 3 requests per second
@@ -95,7 +101,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(Governor::new(&governor_conf))
             .wrap(Logger::default())
             .wrap(cors)
-            .service(hello)
+            .route("/", web::get().to(hello))
     })
     .bind("127.0.0.1:3000")?
     .run()
