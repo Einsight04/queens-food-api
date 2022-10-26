@@ -12,7 +12,7 @@ use actix_web::{
 };
 use dotenv::dotenv;
 use env_logger::Env;
-use schemas::uncleaned_food_api::UncleanedFoodApi;
+use schemas::food_data::UncleanedFoodApi;
 use std::env::var;
 use std::sync::{Arc};
 use std::time::Duration;

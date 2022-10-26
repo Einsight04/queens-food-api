@@ -1,5 +1,25 @@
 use serde::{Deserialize, Serialize};
 
+#[derive(Serialize, Debug)]
+pub struct CleanedFoodApi {
+    pub(crate) product_name: String,
+    pub(crate) short_description: String,
+    pub(crate) serving: String,
+    pub(crate) calories: String,
+    pub(crate) calories_from_fat: String,
+    pub(crate) total_fat: String,
+    pub(crate) saturated_fat: String,
+    pub(crate) trans_fat: String,
+    pub(crate) cholesterol: String,
+    pub(crate) sodium: String,
+    pub(crate) total_carbohydrates: String,
+    pub(crate) dietary_fiber: String,
+    pub(crate) sugars: String,
+    pub(crate) protein: String,
+    pub is_vegetarian: bool,
+    pub allergens: String,
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "PascalCase")]
 pub struct UncleanedFoodApi {
@@ -34,18 +54,19 @@ pub struct SubCategory {
 #[serde(rename_all = "PascalCase")]
 pub struct Item {
     pub(crate) product_name: String,
+    pub(crate) short_description: String,
     pub(crate) serving: String,
     pub(crate) calories: String,
     pub(crate) calories_from_fat: String,
     pub(crate) total_fat: String,
     pub(crate) saturated_fat: String,
-    trans_fat: String,
-    cholesterol: String,
-    sodium: String,
-    total_carbohydrates: String,
-    dietary_fiber: String,
-    sugars: String,
-    protein: String,
-    is_vegetarian: bool,
+    pub(crate) trans_fat: String,
+    pub(crate) cholesterol: String,
+    pub(crate) sodium: String,
+    pub(crate) total_carbohydrates: String,
+    pub(crate) dietary_fiber: String,
+    pub(crate) sugars: String,
+    pub(crate) protein: String,
+    pub(crate) is_vegetarian: bool,
     pub(crate) allergens: String,
 }

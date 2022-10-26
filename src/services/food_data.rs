@@ -1,7 +1,7 @@
-use crate::UncleanedFoodApi;
 use chrono::{Utc};
 use redis::Commands;
 use serde::{Deserialize, Serialize};
+use crate::schemas::food_data::{CleanedFoodApi, UncleanedFoodApi};
 
 
 pub async fn updater(con: &mut r2d2::PooledConnection<redis::Client>) {
@@ -46,9 +46,9 @@ pub async fn updater(con: &mut r2d2::PooledConnection<redis::Client>) {
 }
 
 
-fn cleanup(data: &UncleanedFoodApi) -> Vec<FoodData> {
+fn cleanup(data: &UncleanedFoodApi) -> Vec<CleanedFoodApi> {
     // make vector of food data
-    let mut food_data: Vec<FoodData> = Vec::new();
+    let mut food_data: Vec<CleanedFoodApi> = Vec::new();
 
     // recreate data as vector of food data
     food_data.extend(
@@ -57,22 +57,23 @@ fn cleanup(data: &UncleanedFoodApi) -> Vec<FoodData> {
             .flat_map(|meal_period| &meal_period.stations)
             .flat_map(|station| &station.sub_categories)
             .flat_map(|sub_category| &sub_category.items)
-            .map(|item| FoodData {
+            .map(|item| CleanedFoodApi {
                 product_name: item.product_name.clone(),
-                short_description: item.product_name.clone(),
-                dietary_information: item.allergens.clone(),
+                short_description: item.short_description.clone(),
                 serving: item.serving.clone(),
                 calories: item.calories.clone(),
                 calories_from_fat: item.calories_from_fat.clone(),
                 total_fat: item.total_fat.clone(),
                 saturated_fat: item.saturated_fat.clone(),
-                trans_fat: "".to_string(),
-                cholesterol: "".to_string(),
-                sodium: "".to_string(),
-                total_carbohydrates: "".to_string(),
-                dietary_fiber: "".to_string(),
-                sugars: "".to_string(),
-                protein: "".to_string()
+                trans_fat: item.trans_fat.clone(),
+                cholesterol: item.cholesterol.clone(),
+                sodium: item.sodium.clone(),
+                total_carbohydrates: item.total_carbohydrates.clone(),
+                dietary_fiber: item.dietary_fiber.clone(),
+                sugars: item.sugars.clone(),
+                protein: item.protein.clone(),
+                is_vegetarian: item.is_vegetarian,
+                allergens: item.allergens.clone(),
             }));
 
     food_data
