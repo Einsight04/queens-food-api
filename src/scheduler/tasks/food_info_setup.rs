@@ -1,53 +1,67 @@
 use crate::LennyDish;
+use chrono::{DateTime, Duration, Utc};
 use redis::Commands;
 use std::sync::Arc;
-use chrono::{DateTime, Utc, Duration};
 
-pub async fn handler() {
-    let client = redis::Client::open("redis://127.0.0.1:6379")
-        .expect("Failed to connect to redis");
+pub async fn handler(con: &mut r2d2::PooledConnection<redis::Client>) {
+    /*
+        let client = redis::Client::open("redis://127.0.0.1:6379")
+            .expect("Failed to connect to redis");
 
 
-    let mut con = client.get_connection()
-        .expect("Failed to get connection");
+        let mut con = client.get_connection()
+            .expect("Failed to get connection");
+    */
 
-    clear_food_info(&mut con);
-    food_info_builder(&mut con)
-        .await;
+    food_info_builder(con).await;
 }
 
-fn clear_food_info(con: &mut redis::Connection) {
-    // delete all food info
-    let _: () = con.del("food_info")
-        .expect("Failed to delete food_info");
-}
+async fn food_info_builder(con: &mut r2d2::PooledConnection<redis::Client>) {
+    let location_ids = vec![
+        ("lenny", 14627),
+        ("ban_righ", 14628),
+        ("jean_royce", 14629),
+    ];
 
-async fn food_info_builder(con: &mut redis::Connection) {
-    // for loop to get past 7 days including today
-    let mut food_info: Vec<String> = Vec::new();
+    // get current date
+    let current_date = Utc::now();
+    let date_string = current_date.format("%m-%d-%Y").to_string();
 
-    for day in 0..7 {
-        let date = Utc::today() - Duration::days(day);
-
-        println!("date: {}", date.format("%m-%d-%Y"));
-
-        con.hset::<String, String, String, ()>(
-            "food_info".to_string(), date.format("%m-%d-%Y").to_string(), "food info".to_string())
-            .expect("Failed to set hash");
-
-        // get my_key
-        // let my_key: String = con.get("my_key")
-        //     .expect("Failed to get my_key");
-        //
-        // println!("my_key: {}", my_key);
-
-        // add to db
-
-        // let resp = reqwest::get(
-        //     format!("https://studentweb.housing.queensu.ca/public/campusDishAPI/campusDishAPI.php?locationId=14627&mealPeriod=Lunch&selDate={}", date.format("%m-%d-%Y")))
-        //     .await?
-        //     .json::<LennyDish>()
-        //     .await?;
-        // food_info.push(resp);
+    // loop through location ids
+    for (name, id) in location_ids {
+        // get food info
+        let resp = reqwest::get(&format!(
+            "https://studentweb.housing.queensu.ca/public/campusDishAPI/campusDishAPI.php?locationId={}&mealPeriod=Lunch&selDate={}",
+            id, date_string
+        ))
+            .await
+            .unwrap()
+            .json::<LennyDish>()
+            .await
+            .unwrap();
     }
+
+
+    // let mut food_info: Vec<String> = Vec::new();
+    // let date = Utc::now().date().naive_utc();
+    //
+    // println!("date: {}", date.format("%m-%d-%Y"));
+    //
+    // con.hset::<String, String, String, ()>(
+    //     "food_info".to_string(),
+    //     date.format("%m-%d-%Y").to_string(),
+    //     "food info".to_string(),
+    // )
+    // .expect("Failed to set hash");
+    //
+    // let my_key: String = con.get("my_key").expect("Failed to get my_key");
+    //
+    // println!("my_key: {}", my_key);
+    //
+    // let resp = reqwest::get(
+    //     format!("https://studentweb.housing.queensu.ca/public/campusDishAPI/campusDishAPI.php?locationId=14627&mealPeriod=Lunch&selDate={}", date.format("%m-%d-%Y")))
+    //     .await?
+    //     .json::<LennyDish>()
+    //     .await?;
+    // food_info.push(resp);
 }

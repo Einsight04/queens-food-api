@@ -1,22 +1,20 @@
 use serde::{Deserialize, Serialize};
 
-
-#[serde(rename_all = "PascalCase")]
 #[derive(Deserialize, Debug)]
+#[serde(rename_all = "PascalCase")]
 pub struct LennyDish {
     meal_periods: Vec<MealPeriod>,
 }
 
-
-#[serde(rename_all = "PascalCase")]
 #[derive(Deserialize, Debug)]
+#[serde(rename_all = "PascalCase")]
 struct MealPeriod {
     meal_period: String,
     stations: Vec<Station>,
 }
 
-#[serde(rename_all = "PascalCase")]
 #[derive(Deserialize, Debug)]
+#[serde(rename_all = "PascalCase")]
 struct Station {
     id: String,
     name: String,
@@ -24,16 +22,16 @@ struct Station {
     sub_categories: Vec<SubCategory>,
 }
 
-#[serde(rename_all = "PascalCase")]
 #[derive(Deserialize, Debug)]
+#[serde(rename_all = "PascalCase")]
 struct SubCategory {
     name: String,
     sort: u32,
     items: Vec<Item>,
 }
 
-#[serde(rename_all = "PascalCase")]
 #[derive(Deserialize, Debug)]
+#[serde(rename_all = "PascalCase")]
 struct Item {
     product_name: String,
     serving: String,

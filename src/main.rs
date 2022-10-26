@@ -1,27 +1,30 @@
-mod schemas;
-mod scheduler;
 mod api;
+mod scheduler;
+mod schemas;
+mod services;
 
 extern crate redis;
 
-use std::env::var;
-use std::sync::Arc;
 use actix_cors::Cors;
 use actix_governor::{Governor, GovernorConfigBuilder};
-use actix_web::{middleware::Logger, get, post, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
-use redis::Commands;
-use dotenv::dotenv;
-use serde::Deserialize;
-use tokio::time::{sleep};
-use env_logger::Env;
-use clokwerk::{Scheduler, TimeUnits};
+use actix_web::cookie::time::ext::NumericalDuration;
+use actix_web::rt::time;
+use actix_web::{
+    get, middleware::Logger, post, web, App, HttpRequest, HttpResponse, HttpServer, Responder,
+};
 use clokwerk::Interval::*;
+use clokwerk::{Scheduler, TimeUnits};
+use dotenv::dotenv;
+use env_logger::Env;
+use redis::Commands;
+use scheduler::{scheduler_handler, tasks::food_info_setup};
+use schemas::food_api::LennyDish;
+use serde::Deserialize;
+use std::env::var;
+use std::sync::{Arc, RwLock};
 use std::thread;
 use std::time::Duration;
-use actix_web::cookie::time::ext::NumericalDuration;
-use schemas::food_api::LennyDish;
-use scheduler::{scheduler_setup, tasks::food_info_setup};
-
+use tokio::time::sleep;
 
 #[tokio::main]
 async fn request() -> Result<(), Box<dyn std::error::Error>> {
@@ -42,7 +45,6 @@ async fn hello() -> impl Responder {
     HttpResponse::Ok().body("Hello world!")
 }
 
-
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     //load env vars
@@ -56,14 +58,8 @@ async fn main() -> std::io::Result<()> {
     //setup env logger
     env_logger::init_from_env(Env::default().default_filter_or("info"));
 
-    food_info_setup::handler()
-        .await;
-    scheduler_setup::setup_scheduler();
-
     // setup redis client
-    let client = redis::Client::open("redis://127.0.0.1:6379")
-        .expect("Failed to connect to redis");
-
+    let client = redis::Client::open("redis://127.0.0.1:6379").expect("Failed to connect to redis");
 
     // create r2d2 pool
     let pool = r2d2::Pool::builder()
@@ -72,6 +68,13 @@ async fn main() -> std::io::Result<()> {
 
     // create shared pool state
     let wrapped = Arc::new(pool);
+
+    let mut one_con: r2d2::PooledConnection<redis::Client> = wrapped.get().unwrap();
+
+    actix_web::rt::spawn(async move {
+        food_info_setup::handler(&mut one_con).await;
+        scheduler_handler::handler(&mut one_con);
+    });
 
     // rate limiter, 3 requests per second
     let governor_conf = GovernorConfigBuilder::default()
@@ -94,7 +97,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(cors)
             .service(hello)
     })
-        .bind("127.0.0.1:3000")?
-        .run()
-        .await
+    .bind("127.0.0.1:3000")?
+    .run()
+    .await
 }

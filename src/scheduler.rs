@@ -1,2 +1,2 @@
-pub(crate) mod scheduler_setup;
+pub(crate) mod scheduler_handler;
 pub(crate) mod tasks;
