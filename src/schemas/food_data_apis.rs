@@ -16,8 +16,8 @@ pub struct CleanedFoodApi {
     pub(crate) dietary_fiber: String,
     pub(crate) sugars: String,
     pub(crate) protein: String,
-    pub is_vegetarian: bool,
-    pub allergens: String,
+    pub(crate) is_vegetarian: bool,
+    pub(crate) allergens: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

@@ -8,7 +8,7 @@ use crate::services::food_data_handler;
 use actix_cors::Cors;
 use actix_governor::{Governor, GovernorConfigBuilder};
 use actix_web::{
-    get, middleware::Logger, web, App, HttpResponse, HttpServer, Responder, HttpRequest
+    get, middleware::Logger, web, App, HttpResponse, HttpServer, Responder, HttpRequest,
 };
 use dotenv::dotenv;
 use env_logger::Env;
@@ -16,22 +16,11 @@ use schemas::food_data_apis::UncleanedFoodApi;
 use std::env::var;
 use std::sync::{Arc};
 use std::time::Duration;
+use chrono::Utc;
 use redis::Commands;
 use tokio::time::sleep;
 
-#[tokio::main]
-async fn request() -> Result<(), Box<dyn std::error::Error>> {
-    let resp = reqwest::get(
-        "https://studentweb.housing.queensu.ca/public/campusDishAPI/campusDishAPI.php?locationId=14627&mealPeriod=Lunch&selDate=10-22-2022")
-        .await?
-        .json::<UncleanedFoodApi>()
-        .await?;
 
-    // print serialized json
-    println!("{:#?}", resp);
-
-    Ok(())
-}
 
 async fn hello(pool: web::Data<r2d2::Pool<redis::Client>>) -> impl Responder {
     // get connectoin from r2d2 pool
@@ -40,7 +29,6 @@ async fn hello(pool: web::Data<r2d2::Pool<redis::Client>>) -> impl Responder {
     // get key lenny, value Breakfast
     let breakfast: String = con.hget("lenny", "Breakfast").unwrap();
 
-    // return as stringified json
     HttpResponse::Ok().body(breakfast)
 }
 
@@ -74,12 +62,14 @@ async fn main() -> std::io::Result<()> {
     actix_web::rt::spawn(async move {
         food_data_handler::updater(&mut con).await;
 
-        actix_web::rt::spawn(async move {
-            loop {
-                food_data_handler::updater(&mut con).await;
-                sleep(Duration::from_secs(60)).await;
-            }
-        });
+        loop {
+            let now = Utc::now();
+            let tomorrow = now + chrono::Duration::days(1);
+            let tomorrow = tomorrow.date().and_hms(0, 0, 0);
+            let duration = tomorrow - now;
+            sleep(duration.to_std().unwrap()).await;
+            food_data_handler::updater(&mut con).await;
+        }
     });
 
     // rate limiter, 3 requests per second
@@ -103,7 +93,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(cors)
             .route("/", web::get().to(hello))
     })
-    .bind("127.0.0.1:3000")?
-    .run()
-    .await
+        .bind("192.168.0.107:4000")?
+        .run()
+        .await
 }
