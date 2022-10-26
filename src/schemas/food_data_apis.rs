@@ -1,4 +1,48 @@
+use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+
+
+// impl CleanedFoodApi {
+impl From<UncleanedFoodApi> for HashMap<String, Vec<CleanedFoodApi>> {
+    fn from(food: UncleanedFoodApi) -> Self {
+        let mut cleaned_data: HashMap<String, Vec<CleanedFoodApi>> = HashMap::new();
+
+        for meal_period in &food.meal_periods {
+            for station in &meal_period.stations {
+                for sub_category in &station.sub_categories {
+                    for item in &sub_category.items {
+                        let cleaned_food_api = CleanedFoodApi {
+                            product_name: item.product_name.clone(),
+                            short_description: item.short_description.clone(),
+                            serving: item.serving.clone(),
+                            calories: item.calories.clone(),
+                            calories_from_fat: item.calories_from_fat.clone(),
+                            total_fat: item.total_fat.clone(),
+                            saturated_fat: item.saturated_fat.clone(),
+                            trans_fat: item.trans_fat.clone(),
+                            cholesterol: item.cholesterol.clone(),
+                            sodium: item.sodium.clone(),
+                            total_carbohydrates: item.total_carbohydrates.clone(),
+                            dietary_fiber: item.dietary_fiber.clone(),
+                            sugars: item.sugars.clone(),
+                            protein: item.protein.clone(),
+                            is_vegetarian: item.is_vegetarian,
+                        };
+
+                        cleaned_data
+                            .entry(station.name.clone())
+                            .or_insert(Vec::new())
+                            .push(cleaned_food_api);
+                    }
+                }
+            }
+        }
+
+
+        cleaned_data
+    }
+}
+
 
 #[derive(Serialize, Debug)]
 pub struct CleanedFoodApi {
@@ -17,7 +61,6 @@ pub struct CleanedFoodApi {
     pub(crate) sugars: String,
     pub(crate) protein: String,
     pub(crate) is_vegetarian: bool,
-    pub(crate) allergens: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

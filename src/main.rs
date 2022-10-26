@@ -7,20 +7,15 @@ extern crate redis;
 use crate::services::food_data_handler;
 use actix_cors::Cors;
 use actix_governor::{Governor, GovernorConfigBuilder};
-use actix_web::{
-    get, middleware::Logger, web, App, HttpResponse, HttpServer, Responder, HttpRequest,
-};
+use actix_web::{middleware::Logger, web, App, HttpRequest, HttpResponse, HttpServer, Responder};
+use api::controllers::food_data_controller;
+use chrono::Utc;
 use dotenv::dotenv;
 use env_logger::Env;
-use schemas::food_data_apis::UncleanedFoodApi;
-use std::env::var;
-use std::sync::{Arc};
-use std::time::Duration;
-use chrono::Utc;
 use redis::Commands;
+use std::env::var;
+use std::sync::Arc;
 use tokio::time::sleep;
-
-
 
 async fn hello(pool: web::Data<r2d2::Pool<redis::Client>>) -> impl Responder {
     // get connectoin from r2d2 pool
@@ -91,9 +86,13 @@ async fn main() -> std::io::Result<()> {
             .wrap(Governor::new(&governor_conf))
             .wrap(Logger::default())
             .wrap(cors)
-            .route("/", web::get().to(hello))
+            .service(
+                web::scope("/api")
+                    .service(web::scope("/food-data").service(food_data_controller::food_data)),
+            )
+            .default_service(web::route().to(|| HttpResponse::NotFound()))
     })
-        .bind("192.168.0.107:4000")?
-        .run()
-        .await
+    .bind("192.168.0.107:4000")?
+    .run()
+    .await
 }
