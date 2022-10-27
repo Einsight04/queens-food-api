@@ -1,8 +1,9 @@
+use std::collections::HashMap;
+
 use crate::schemas::food_data_apis::{CleanedFoodApi, UncleanedFoodApi};
 use chrono::Utc;
 use futures::future::{self, try_join_all};
 use redis::Commands;
-use std::collections::HashMap;
 
 static LOCATION_IDS: &'static [(&str, i32)] =
     &[("lenny", 14627), ("ban_righ", 14628), ("jean_royce", 14629)];
@@ -36,11 +37,13 @@ pub async fn updater(con: &mut r2d2::PooledConnection<redis::Client>) {
                 .await
                 .unwrap();
 
+            let cleaned = HashMap::<String, Vec<CleanedFoodApi>>::from(cur_food);
+
             let _: () = con
                 .hset(
                     location_name,
                     meal_period.to_lowercase(),
-                    serde_json::to_string(&cur_food).unwrap(),
+                    serde_json::to_string(&cleaned).unwrap(),
                 )
                 .unwrap();
         }
