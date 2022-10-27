@@ -1,33 +1,15 @@
-use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
-
-// impl CleanedFoodApi {
 impl From<UncleanedFoodApi> for HashMap<String, Vec<CleanedFoodApi>> {
     fn from(food: UncleanedFoodApi) -> Self {
         let mut cleaned_data: HashMap<String, Vec<CleanedFoodApi>> = HashMap::new();
 
-        for meal_period in &food.meal_periods {
-            for station in &meal_period.stations {
-                for sub_category in &station.sub_categories {
-                    for item in &sub_category.items {
-                        let cleaned_food_api = CleanedFoodApi {
-                            product_name: item.product_name.clone(),
-                            short_description: item.short_description.clone(),
-                            serving: item.serving.clone(),
-                            calories: item.calories.clone(),
-                            calories_from_fat: item.calories_from_fat.clone(),
-                            total_fat: item.total_fat.clone(),
-                            saturated_fat: item.saturated_fat.clone(),
-                            trans_fat: item.trans_fat.clone(),
-                            cholesterol: item.cholesterol.clone(),
-                            sodium: item.sodium.clone(),
-                            total_carbohydrates: item.total_carbohydrates.clone(),
-                            dietary_fiber: item.dietary_fiber.clone(),
-                            sugars: item.sugars.clone(),
-                            protein: item.protein.clone(),
-                            is_vegetarian: item.is_vegetarian,
-                        };
+        for meal_period in food.meal_periods {
+            for station in meal_period.stations {
+                for sub_category in station.sub_categories {
+                    for item in sub_category.items {
+                        let cleaned_food_api = CleanedFoodApi::from(item);
 
                         cleaned_data
                             .entry(station.name.clone())
@@ -40,7 +22,6 @@ impl From<UncleanedFoodApi> for HashMap<String, Vec<CleanedFoodApi>> {
         cleaned_data
     }
 }
-
 
 #[derive(Serialize, Debug)]
 pub struct CleanedFoodApi {
@@ -59,6 +40,28 @@ pub struct CleanedFoodApi {
     pub(crate) sugars: String,
     pub(crate) protein: String,
     pub(crate) is_vegetarian: bool,
+}
+
+impl From<Item> for CleanedFoodApi {
+    fn from(item: Item) -> Self {
+        CleanedFoodApi {
+            product_name: item.product_name,
+            short_description: item.short_description,
+            serving: item.serving,
+            calories: item.calories,
+            calories_from_fat: item.calories_from_fat,
+            total_fat: item.total_fat,
+            saturated_fat: item.saturated_fat,
+            trans_fat: item.trans_fat,
+            cholesterol: item.cholesterol,
+            sodium: item.sodium,
+            total_carbohydrates: item.total_carbohydrates,
+            dietary_fiber: item.dietary_fiber,
+            sugars: item.sugars,
+            protein: item.protein,
+            is_vegetarian: item.is_vegetarian,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
