@@ -3,20 +3,22 @@ use chrono::Utc;
 use redis::Commands;
 use std::collections::HashMap;
 
+static LOCATION_IDS: &'static [(&str, i32)] =
+    &[("lenny", 14627), ("ban_righ", 14628), ("jean_royce", 14629)];
+
+static MEAL_PERIODS: &'static [&str] = &["Breakfast", "Lunch", "Dinner"];
 
 pub async fn updater(con: &mut r2d2::PooledConnection<redis::Client>) {
-    let location_ids = vec![("lenny", 14627), ("ban_righ", 14628), ("jean_royce", 14629)];
-    let meal_periods = vec!["Breakfast", "Lunch", "Dinner"];
-
     // get current date
     let current_date = Utc::now().format("%Y-%m-%d").to_string();
+    let client = reqwest::Client::new();
 
-    for (location_name, location_id) in location_ids {
-        for meal_period in &meal_periods {
-            let resp = reqwest::get(format!(
-                "https://studentweb.housing.queensu.ca/public/campusDishAPI/campusDishAPI.php?locationId={}&mealPeriod={}&selDate={}",
-                location_id, meal_period, current_date
-            ))
+    for (location_name, location_id) in LOCATION_IDS {
+        for meal_period in MEAL_PERIODS {
+            let client = &client;
+            let resp = client.get(format!(
+                    "https://studentweb.housing.queensu.ca/public/campusDishAPI/campusDishAPI.php?locationId={}&mealPeriod={}&selDate={}",
+                    location_id, meal_period, current_date)).send()
                 .await
                 .unwrap()
                 .json::<UncleanedFoodApi>()
