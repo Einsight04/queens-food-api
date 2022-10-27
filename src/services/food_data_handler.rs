@@ -20,24 +20,29 @@ pub async fn updater(con: &mut r2d2::PooledConnection<redis::Client>) {
         for meal_period in MEAL_PERIODS {
             let client = &client;
             let resp = client.get(format!(
-                    "https://studentweb.housing.queensu.ca/public/campusDishAPI/campusDishAPI.php?locationId={}&mealPeriod={}&selDate={}",
-            location_id, meal_period, current_date)).send();
+                "https://studentweb.housing.queensu.ca/public/campusDishAPI/campusDishAPI.php?locationId={}&mealPeriod={}&selDate={}",
+                location_id, meal_period, current_date)).send();
             collected_futures.push(resp);
         }
     }
 
-    let mut something = future::try_join_all(collected_futures).await.unwrap();
+    let mut responses = future::try_join_all(collected_futures).await.unwrap();
 
     for (location_name, _) in LOCATION_IDS {
         for meal_period in MEAL_PERIODS {
             // take top thing off vec, this shit is all in still in order lol
-            let cur_food = something
+            let food_data = responses
                 .remove(0)
                 .json::<UncleanedFoodApi>()
                 .await
                 .unwrap();
 
-            let cleaned = HashMap::<String, Vec<CleanedFoodApi>>::from(cur_food);
+            // if empty ignore it
+            if food_data.meal_periods.is_empty() {
+                continue;
+            }
+
+            let cleaned = HashMap::<String, Vec<CleanedFoodApi>>::from(food_data);
 
             let _: () = con
                 .hset(
@@ -47,5 +52,13 @@ pub async fn updater(con: &mut r2d2::PooledConnection<redis::Client>) {
                 )
                 .unwrap();
         }
+    }
+}
+
+pub fn clear_all(con: &mut r2d2::PooledConnection<redis::Client>) {
+    let keys: Vec<String> = con.keys("*").unwrap();
+
+    for key in keys {
+        let _: () = con.del(key).unwrap();
     }
 }

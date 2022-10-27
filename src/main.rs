@@ -16,6 +16,7 @@ use redis::Commands;
 use std::env::var;
 use std::sync::Arc;
 use tokio::time::sleep;
+use crate::api::controllers::location_data_controller;
 
 async fn hello(pool: web::Data<r2d2::Pool<redis::Client>>) -> impl Responder {
     // get connectoin from r2d2 pool
@@ -55,6 +56,7 @@ async fn main() -> std::io::Result<()> {
     let mut con: r2d2::PooledConnection<redis::Client> = wrapped.get().unwrap();
 
     actix_web::rt::spawn(async move {
+        food_data_handler::clear_all(&mut con);
         food_data_handler::updater(&mut con).await;
 
         loop {
@@ -86,13 +88,12 @@ async fn main() -> std::io::Result<()> {
             .wrap(Governor::new(&governor_conf))
             .wrap(Logger::default())
             .wrap(cors)
-            .service(
-                web::scope("/api")
-                    .service(web::scope("/food-data").service(food_data_controller::food_data)),
-            )
+            .service(web::scope("/api")
+                .service(web::scope("/food").service(food_data_controller::food_data))
+                .service(web::scope("/locations").service(location_data_controller::locations)))
             .default_service(web::route().to(|| HttpResponse::NotFound()))
     })
-    .bind("192.168.0.107:4000")?
-    .run()
-    .await
+        .bind("192.168.0.107:4000")?
+        .run()
+        .await
 }
