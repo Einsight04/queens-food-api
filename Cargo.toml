@@ -1,5 +1,5 @@
 [package]
-name = "dining_buddy"
+name = "queens_calories"
 version = "0.1.0"
 edition = "2021"
 

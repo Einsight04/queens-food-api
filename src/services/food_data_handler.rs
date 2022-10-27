@@ -13,7 +13,7 @@ pub async fn updater(con: &mut r2d2::PooledConnection<redis::Client>) {
 
     for (location_name, location_id) in location_ids {
         for meal_period in &meal_periods {
-            let resp = reqwest::get(&format!(
+            let resp = reqwest::get(format!(
                 "https://studentweb.housing.queensu.ca/public/campusDishAPI/campusDishAPI.php?locationId={}&mealPeriod={}&selDate={}",
                 location_id, meal_period, current_date
             ))

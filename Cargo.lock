@@ -563,26 +563,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dining_buddy"
-version = "0.1.0"
-dependencies = [
- "actix-cors",
- "actix-governor",
- "actix-web",
- "chrono",
- "clokwerk",
- "dotenv",
- "env_logger",
- "futures",
- "r2d2",
- "redis",
- "reqwest",
- "serde",
- "serde_json",
- "tokio",
-]
-
-[[package]]
 name = "dotenv"
 version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1293,6 +1273,26 @@ dependencies = [
  "wasi 0.10.0+wasi-snapshot-preview1",
  "web-sys",
  "winapi",
+]
+
+[[package]]
+name = "queens_calories"
+version = "0.1.0"
+dependencies = [
+ "actix-cors",
+ "actix-governor",
+ "actix-web",
+ "chrono",
+ "clokwerk",
+ "dotenv",
+ "env_logger",
+ "futures",
+ "r2d2",
+ "redis",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]
