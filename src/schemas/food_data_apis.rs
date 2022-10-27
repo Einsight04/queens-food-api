@@ -37,8 +37,6 @@ impl From<UncleanedFoodApi> for HashMap<String, Vec<CleanedFoodApi>> {
                 }
             }
         }
-
-
         cleaned_data
     }
 }
