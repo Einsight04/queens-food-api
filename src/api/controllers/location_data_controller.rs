@@ -5,11 +5,9 @@ use actix_web::{web, HttpResponse, Responder};
 use redis::Commands;
 
 
-#[get("/")]
+#[get("")]
 pub async fn locations(pool: web::Data<r2d2::Pool<redis::Client>>) -> impl Responder {
     let mut con = pool.get().unwrap();
-
-    // { lenny: [Breakfast, Lunch, Dinner], ... }
 
     let mut location_data: HashMap<String, Vec<String>> = HashMap::new();
 

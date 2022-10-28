@@ -44,6 +44,7 @@ pub async fn updater(con: &mut r2d2::PooledConnection<redis::Client>) {
 
             let cleaned = HashMap::<String, Vec<CleanedFoodApi>>::from(food_data);
 
+            // pass in as json
             let _: () = con
                 .hset(
                     location_name,
