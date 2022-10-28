@@ -70,11 +70,11 @@ async fn main() -> std::io::Result<()> {
     });
 
     // rate limiter, 3 requests per second
-    let governor_conf = GovernorConfigBuilder::default()
-        .per_second(1)
-        .burst_size(5)
-        .finish()
-        .unwrap();
+    // let governor_conf = GovernorConfigBuilder::default()
+    //     .per_second(1)
+    //     .burst_size(5)
+    //     .finish()
+    //     .unwrap();
 
     HttpServer::new(move || {
         let cors = Cors::default()
@@ -85,7 +85,7 @@ async fn main() -> std::io::Result<()> {
 
         App::new()
             .app_data(web::Data::from(wrapped.clone()))
-            .wrap(Governor::new(&governor_conf))
+            // .wrap(Governor::new(&governor_conf))
             .wrap(Logger::default())
             .wrap(cors)
             .service(web::scope("/api")

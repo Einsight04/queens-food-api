@@ -17,7 +17,7 @@ pub async fn locations(pool: web::Data<r2d2::Pool<redis::Client>>) -> impl Respo
 
     // get all fields of those keys
     for key in keys {
-        let fields: Vec<String> = con.hkeys(key.clone()).unwrap();
+        let fields: Vec<String> = con.hkeys(&key).unwrap();
         location_data.insert(key, fields);
     }
 
